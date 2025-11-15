@@ -1,0 +1,43 @@
+// Schema Prisma para o Destinote
+// Define a estrutura do banco de dados SQLite
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo de Categoria
+// Representa as 22 categorias com suas cores específicas
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique // Nome da categoria (ex: "Lifestyle", "Aprender")
+  color     String?  // Cor em formato hexadecimal (ex: "FF5D5D")
+  goals     Goal[]   // Relação: uma categoria tem vários goals
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Modelo de Goal (Meta/Item da lista)
+// Representa cada um dos ~1000 itens da lista
+model Goal {
+  id          Int       @id @default(autoincrement())
+  title       String    // Título do goal (ex: "Pular de paraquedas")
+  local       String?   // Local opcional (ex: "Paris", "Brasil")
+  categoryId  Int       // ID da categoria
+  category    Category  @relation(fields: [categoryId], references: [id])
+  cod2        String?   // Código adicional 2
+  cod3        String?   // Código adicional 3
+  refBase     Int?      // Referência base do CSV
+  isTopTen    Boolean   @default(false) // Indica se é um dos 10 primeiros (tratamento visual especial)
+  description String?   // Descrição detalhada (para futuras expansões)
+  imageUrl    String?   // URL da imagem (placeholder ou real)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([categoryId])
+  @@index([isTopTen])
+}

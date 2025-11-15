@@ -1,0 +1,96 @@
+
+// Componente GlobeBackground - Fundo animado com gradiente dinâmico
+// Cria um efeito visual de globo/esfera com gradientes que mudam
+
+'use client';
+
+import { useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
+
+export default function GlobeBackground() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Configurar tamanho do canvas
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Variáveis de animação
+    let frame = 0;
+
+    // Função de animação
+    const animate = () => {
+      frame++;
+      
+      // Criar gradiente dinâmico que se move
+      const gradient = ctx.createRadialGradient(
+        canvas.width / 2 + Math.sin(frame * 0.01) * 200,
+        canvas.height / 2 + Math.cos(frame * 0.01) * 200,
+        0,
+        canvas.width / 2,
+        canvas.height / 2,
+        Math.max(canvas.width, canvas.height) * 0.8
+      );
+
+      // Cores do gradiente (roxo, azul, rosa)
+      gradient.addColorStop(0, `rgba(139, 92, 246, ${0.3 + Math.sin(frame * 0.02) * 0.1})`); // Roxo
+      gradient.addColorStop(0.5, `rgba(59, 130, 246, ${0.2 + Math.sin(frame * 0.015) * 0.1})`); // Azul
+      gradient.addColorStop(1, 'rgba(17, 24, 39, 0.95)'); // Cinza escuro
+
+      // Limpar e desenhar
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', resizeCanvas);
+    };
+  }, []);
+
+  return (
+    <>
+      {/* Canvas animado */}
+      <canvas
+        ref={canvasRef}
+        className="fixed inset-0 -z-10"
+      />
+      
+      {/* Overlay com pontos/estrelas */}
+      <div className="fixed inset-0 -z-10">
+        {[...Array(50)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-white rounded-full"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              opacity: [0.2, 0.8, 0.2],
+              scale: [1, 1.5, 1],
+            }}
+            transition={{
+              duration: 2 + Math.random() * 3,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+            }}
+          />
+        ))}
+      </div>
+    </>
+  );
+}

@@ -4,6 +4,7 @@
 import { PrismaClient } from '@prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
+import { parse } from 'csv-parse/sync';
 
 const prisma = new PrismaClient();
 
@@ -26,34 +27,30 @@ const categoryColorMap: Record<string, string | null> = {
   'Top': 'EBB903',
   'Ouvir/jogar': '20C6B6',
   'Cômico': '90EE90',
+  'Comico': '90EE90', // Variação sem acento
   'Simples': 'ADD8E6',
   'Milestone': '6F6FE3', // Marco foi chamado de Milestone no CSV
   'Nerd': 'F5F5DC',
   'Adulto +18': null,
+  'Adulto': null, // Variação
   'Premium': null,
+  'Play': '20C6B6', // Mesma cor do Ouvir/jogar
 };
 
-// Função para ler e parsear o CSV
+// Função para ler e parsear o CSV adequadamente
 function parseCSV(filePath: string): any[] {
   const fileContent = fs.readFileSync(filePath, 'utf-8');
-  const lines = fileContent.split('\n');
-  const headers = lines[0].split(',');
   
-  const data = [];
-  for (let i = 1; i < lines.length; i++) {
-    if (!lines[i].trim()) continue; // Pula linhas vazias
-    
-    const values = lines[i].split(',');
-    const row: any = {};
-    
-    headers.forEach((header, index) => {
-      row[header.trim()] = values[index]?.trim() || null;
-    });
-    
-    data.push(row);
-  }
+  // Usar csv-parse que lida com aspas e vírgulas corretamente
+  const records = parse(fileContent, {
+    columns: true, // Usa a primeira linha como cabeçalho
+    skip_empty_lines: true, // Pula linhas vazias
+    trim: true, // Remove espaços em branco
+    relax_quotes: true, // Mais tolerante com aspas
+    relax_column_count: true, // Tolera colunas inconsistentes
+  });
   
-  return data;
+  return records;
 }
 
 async function main() {
@@ -77,7 +74,7 @@ async function main() {
   console.log(`✅ ${categories.length} categorias criadas/atualizadas`);
 
   // 2. Ler o CSV
-const csvPath = "C:/Projetos/Destinote/Uploads/1000 Main - online - Lista Principal.csv"
+  const csvPath = 'C:\\Projetos\\Destinote\\uploads\\1000 Main - online - Lista Principal.csv';
   console.log(`📖 Lendo CSV de ${csvPath}...`);
   const csvData = parseCSV(csvPath);
   console.log(`✅ ${csvData.length} linhas lidas do CSV`);
@@ -102,8 +99,8 @@ const csvPath = "C:/Projetos/Destinote/Uploads/1000 Main - online - Lista Princi
       continue;
     }
     
-    // Determinar se é top 10 (primeiros 10 itens)
-    const isTopTen = i < 10;
+    // Determinar se é top 8 (primeiros 8 itens destacados)
+    const isTopTen = i < 8;
     
     // Criar goal
     await prisma.goal.create({

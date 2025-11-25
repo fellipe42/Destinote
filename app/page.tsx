@@ -8,9 +8,12 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Navbar from '@/components/Navbar';
-import GlobeBackground from '@/components/GlobeBackground';
+//import GlobeBackground from '@/components/GlobeBackground';
+import ScrollBackgrounds from '@/components/ScrollBackgrounds';
+import RotatingGlobe from '@/components/RotatingGlobe';
 import GoalCard from '@/components/GoalCard';
 import GoalModal from '@/components/GoalModal';
+import AboutSection from '@/components/AboutSection';
 
 // Registrar plugin do GSAP
 if (typeof window !== 'undefined') {
@@ -112,8 +115,14 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen relative">
-      {/* Fundo animado */}
-      <GlobeBackground />
+      {/* Backgrounds com scroll */}
+      <ScrollBackgrounds />
+      
+      {/* Globo rotativo */}
+      <RotatingGlobe />
+      
+      {/* Fundo animado sutil */}
+      {/* <GlobeBackground /> */}
 
       {/* Navbar */}
       <Navbar />
@@ -180,7 +189,7 @@ export default function HomePage() {
             </div>
           ) : (
             <>
-              {/* Top 10 Section */}
+              {/* A Lista - Top 8 Section */}
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -188,13 +197,13 @@ export default function HomePage() {
                 className="mb-20"
               >
                 <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 text-center">
-                  ⭐ Top 10 Experiências
+                  ⭐ A lista
                 </h2>
                 <p className="text-white/70 text-center mb-12">
-                  Os 10 objetivos mais icônicos da lista
+                  Os 8 objetivos mais icônicos da lista
                 </p>
                 
-                <div className="goals-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="goals-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                   {topTenGoals.map((goal) => (
                     <div key={goal.id} className="goal-card">
                       <GoalCard
@@ -206,7 +215,7 @@ export default function HomePage() {
                 </div>
               </motion.div>
 
-              {/* Regular Goals Section */}
+              {/* Regular Goals Section - Um card por vez */}
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -219,14 +228,23 @@ export default function HomePage() {
                   {regularGoals.length} experiências esperando por você
                 </p>
                 
-                <div className="goals-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                  {regularGoals.map((goal) => (
-                    <div key={goal.id} className="goal-card">
+                {/* Cards individuais centralizados */}
+                <div className="space-y-8 max-w-4xl mx-auto">
+                  {regularGoals.map((goal, index) => (
+                    <motion.div
+                      key={goal.id}
+                      className="goal-card"
+                      initial={{ opacity: 0, y: 50 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ delay: 0.1 }}
+                    >
                       <GoalCard
                         {...goal}
                         onClick={() => handleGoalClick(goal)}
+                        isRegular
                       />
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </motion.div>
@@ -241,6 +259,9 @@ export default function HomePage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
+
+      {/* Seção Sobre */}
+      <AboutSection />
 
       {/* Footer */}
       <footer className="relative py-12 px-4 border-t border-white/10">

@@ -42,10 +42,10 @@ export default function GlobeBackground() {
         Math.max(canvas.width, canvas.height) * 0.8
       );
 
-      // Cores do gradiente (roxo, azul, rosa)
-      gradient.addColorStop(0, `rgba(139, 92, 246, ${0.3 + Math.sin(frame * 0.02) * 0.1})`); // Roxo
-      gradient.addColorStop(0.5, `rgba(59, 130, 246, ${0.2 + Math.sin(frame * 0.015) * 0.1})`); // Azul
-      gradient.addColorStop(1, 'rgba(17, 24, 39, 0.95)'); // Cinza escuro
+      // Cores do gradiente (roxo, azul, rosa) - MUITO sutis para não competir com backgrounds
+      gradient.addColorStop(0, `rgba(139, 92, 246, ${0.05 + Math.sin(frame * 0.02) * 0.02})`); // Roxo muito sutil
+      gradient.addColorStop(0.5, `rgba(59, 130, 246, ${0.03 + Math.sin(frame * 0.015) * 0.02})`); // Azul muito sutil
+      gradient.addColorStop(1, 'rgba(17, 24, 39, 0.3)'); // Cinza escuro sutil
 
       // Limpar e desenhar
       ctx.fillStyle = gradient;
@@ -66,11 +66,11 @@ export default function GlobeBackground() {
       {/* Canvas animado */}
       <canvas
         ref={canvasRef}
-        className="fixed inset-0 -z-10"
+        className="fixed inset-0 -z-20"
       />
       
       {/* Overlay com pontos/estrelas */}
-      <div className="fixed inset-0 -z-10">
+      <div className="fixed inset-0 -z-20">
         {[...Array(50)].map((_, i) => (
           <motion.div
             key={i}

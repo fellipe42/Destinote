@@ -6,6 +6,15 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { 
+  List, 
+  Grid3x3, 
+  CheckSquare, 
+  Info, 
+  Languages, 
+  LogIn,
+  Menu
+} from 'lucide-react';
 
 export default function Navbar() {
   return (
@@ -23,50 +32,54 @@ export default function Navbar() {
           </Link>
 
           {/* Links de navegação */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-6">
             <Link 
               href="/" 
-              className="text-white/90 hover:text-white transition-colors text-sm uppercase tracking-wider"
+              className="flex items-center gap-2 text-white/90 hover:text-white transition-colors text-sm uppercase tracking-wider"
             >
+              <List size={18} />
               A Lista
             </Link>
             <Link 
               href="/categorias" 
-              className="text-white/90 hover:text-white transition-colors text-sm uppercase tracking-wider"
+              className="flex items-center gap-2 text-white/90 hover:text-white transition-colors text-sm uppercase tracking-wider"
             >
+              <Grid3x3 size={18} />
               Categorias
             </Link>
             <Link 
               href="/minha-lista" 
-              className="text-white/90 hover:text-white transition-colors text-sm uppercase tracking-wider"
+              className="flex items-center gap-2 text-white/90 hover:text-white transition-colors text-sm uppercase tracking-wider"
             >
+              <CheckSquare size={18} />
               Criar minha lista
             </Link>
             <Link 
               href="/sobre" 
-              className="text-white/90 hover:text-white transition-colors text-sm uppercase tracking-wider"
+              className="flex items-center gap-2 text-white/90 hover:text-white transition-colors text-sm uppercase tracking-wider"
             >
+              <Info size={18} />
               Sobre
             </Link>
             <Link 
               href="/idioma" 
-              className="text-white/90 hover:text-white transition-colors text-sm uppercase tracking-wider"
+              className="flex items-center gap-2 text-white/90 hover:text-white transition-colors text-sm uppercase tracking-wider"
             >
+              <Languages size={18} />
               Idioma
             </Link>
             <Link 
               href="/entrar" 
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors text-sm uppercase tracking-wider"
+              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors text-sm uppercase tracking-wider"
             >
+              <LogIn size={18} />
               Entrar
             </Link>
           </div>
 
           {/* Menu mobile (placeholder para futuro) */}
           <button className="md:hidden text-white">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <Menu size={24} />
           </button>
         </div>
       </div>

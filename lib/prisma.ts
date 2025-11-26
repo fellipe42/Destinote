@@ -1,18 +1,13 @@
-// Biblioteca para gerenciar a conexão com o Prisma Client
-// Evita múltiplas instâncias do Prisma Client em desenvolvimento
+// lib/prisma.ts
+import { PrismaClient } from "@prisma/client";
 
-import { PrismaClient } from '@prisma/client';
-
-// Declaração global para TypeScript
 declare global {
-  // eslint-disable-next-line no-var
-  var prisma: PrismaClient | undefined;
+  // evita múltiplas instâncias no hot reload do Next.js
+  var __PRISMA_CLIENT__: PrismaClient | undefined;
 }
 
-// Criar ou reutilizar instância do Prisma Client
-// Em desenvolvimento, reutiliza a instância para evitar warning de múltiplas conexões
-export const prisma = global.prisma || new PrismaClient();
+export const prisma =
+  global.__PRISMA_CLIENT__ ??
+  new PrismaClient();
 
-if (process.env.NODE_ENV !== 'production') {
-  global.prisma = prisma;
-}
+if (process.env.NODE_ENV !== "production") global.__PRISMA_CLIENT__ = prisma;

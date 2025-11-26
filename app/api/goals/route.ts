@@ -1,50 +1,51 @@
-// API Route: GET /api/goals
-// Retorna a lista de todos os goals com suas categorias
-// Suporta paginação e filtros por categoria
-
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   try {
-    // Extrair parâmetros de query string
-    const searchParams = request.nextUrl.searchParams;
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const categoryId = searchParams.get('categoryId');
-    const topTenOnly = searchParams.get('topTen') === 'true';
-    
-    // Calcular skip para paginação
+    const session = await getServerSession(authOptions);
+
+    const role = session?.user?.role ?? "public";
+
+    const LIMITS = {
+      public: 100,
+      user: 300,
+      paid: 500,
+      premium: 2000,
+    };
+
+    const maxLimit = LIMITS[role as keyof typeof LIMITS];
+
+    const params = request.nextUrl.searchParams;
+
+    const page = parseInt(params.get("page") || "1");
+    const requestedLimit = parseInt(params.get("limit") || "30");
+
+    const categoryId = params.get("categoryId");
+    const topTenOnly = params.get("topTen") === "true";
+
+    const limit = Math.min(requestedLimit, maxLimit);
     const skip = (page - 1) * limit;
-    
-    // Construir filtros
-    const where: { categoryId?: number; isTopTen?: boolean } = {};
-    if (categoryId) {
-      where.categoryId = parseInt(categoryId);
-    }
-    if (topTenOnly) {
-      where.isTopTen = true;
-    }
-    
-    // Buscar goals com suas categorias
+
+    const where: any = {};
+    if (categoryId) where.categoryId = parseInt(categoryId);
+    if (topTenOnly) where.isTopTen = true;
+
     const goals = await prisma.goal.findMany({
       where,
-      include: {
-        category: true, // Incluir dados da categoria
-      },
-      orderBy: {
-        id: 'asc', // Ordenar por ID (mantém ordem do CSV)
-      },
+      include: { category: true },
+      orderBy: { id: "asc" },
       skip,
       take: limit,
     });
-    
-    // Contar total de goals (para paginação)
+
     const total = await prisma.goal.count({ where });
-    
-    // Retornar resposta com dados e metadados de paginação
+
     return NextResponse.json({
       success: true,
+      role,
       data: goals,
       pagination: {
         page,
@@ -53,20 +54,12 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil(total / limit),
       },
     });
-    
   } catch (error) {
-    console.error('Erro ao buscar goals:', error);
+    console.error("Erro /api/goals:", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: 'Erro ao buscar goals',
-      },
+      { success: false, error: "Erro interno no servidor" },
       { status: 500 }
     );
   }
 }
 
-// Preparado para expansão futura: POST, PUT, DELETE
-// export async function POST(request: NextRequest) { ... }
-// export async function PUT(request: NextRequest) { ... }
-// export async function DELETE(request: NextRequest) { ... }

@@ -6,7 +6,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { parse } from 'csv-parse/sync';
 
-const prisma = new PrismaClient();
+
+import { prisma } from "@/lib/prisma";
 
 // Mapeamento de categorias com suas cores (baseado nas especificações)
 const categoryColorMap: Record<string, string | null> = {
@@ -40,7 +41,7 @@ const categoryColorMap: Record<string, string | null> = {
 // Função para ler e parsear o CSV adequadamente
 function parseCSV(filePath: string): any[] {
   const fileContent = fs.readFileSync(filePath, 'utf-8');
-  
+
   // Usar csv-parse que lida com aspas e vírgulas corretamente
   const records = parse(fileContent, {
     columns: true, // Usa a primeira linha como cabeçalho
@@ -49,7 +50,7 @@ function parseCSV(filePath: string): any[] {
     relax_quotes: true, // Mais tolerante com aspas
     relax_column_count: true, // Tolera colunas inconsistentes
   });
-  
+
   return records;
 }
 
@@ -59,7 +60,7 @@ async function main() {
   // 1. Criar categorias
   console.log('📂 Criando categorias...');
   const categories = Object.keys(categoryColorMap);
-  
+
   for (const categoryName of categories) {
     await prisma.category.upsert({
       where: { name: categoryName },
@@ -70,7 +71,7 @@ async function main() {
       },
     });
   }
-  
+
   console.log(`✅ ${categories.length} categorias criadas/atualizadas`);
 
   // 2. Ler o CSV
@@ -82,26 +83,26 @@ async function main() {
   // 3. Criar goals
   console.log('🎯 Criando goals...');
   let createdCount = 0;
-  
+
   for (let i = 0; i < csvData.length; i++) {
     const row = csvData[i];
-    
+
     // Validar que tem pelo menos título e categoria
     if (!row.Title || !row.Categories) continue;
-    
+
     // Buscar a categoria no banco
     const category = await prisma.category.findUnique({
       where: { name: row.Categories },
     });
-    
+
     if (!category) {
       console.warn(`⚠️  Categoria não encontrada: ${row.Categories} para goal: ${row.Title}`);
       continue;
     }
-    
+
     // Determinar se é top 8 (primeiros 8 itens destacados)
     const isTopTen = i < 8;
-    
+
     // Criar goal
     await prisma.goal.create({
       data: {
@@ -117,34 +118,56 @@ async function main() {
         description: null, // Pode ser expandido futuramente
       },
     });
-    
+
     createdCount++;
-    
+
     // Log de progresso a cada 100 itens
     if (createdCount % 100 === 0) {
       console.log(`   📝 ${createdCount} goals criados...`);
     }
   }
-  
+
   console.log(`✅ ${createdCount} goals criados com sucesso!`);
 
   // 4. Estatísticas finais
   const totalCategories = await prisma.category.count();
   const totalGoals = await prisma.goal.count();
   const topTenGoals = await prisma.goal.count({ where: { isTopTen: true } });
-  
+
   console.log('\n📊 Estatísticas do banco de dados:');
   console.log(`   📂 Categorias: ${totalCategories}`);
   console.log(`   🎯 Goals totais: ${totalGoals}`);
   console.log(`   ⭐ Top 10 goals: ${topTenGoals}`);
   console.log('\n✨ Seed concluído com sucesso!');
+
+
+// dentro de main() do seed.ts, depois de criar categorias/goals:
+console.log("🔐 Criando usuários de teste...");
+
+const testUsers = [
+  { email: "public@example.com", name: "Visitor", role: null },
+  { email: "freeuser@example.com", name: "Free User", role: "user" },
+  { email: "paiduser@example.com", name: "Paid User", role: "paid" },
+  { email: "premium@example.com", name: "Premium User", role: "premium" },
+];
+
+for (const u of testUsers) {
+  await prisma.user.upsert({
+    where: { email: u.email },
+    update: { name: u.name, role: u.role },
+    create: { email: u.email, name: u.name, role: u.role },
+  });
+}
+
+console.log("✅ Usuários de teste criados.");
+
 }
 
 main()
-  .catch((e) => {
-    console.error('❌ Erro durante o seed:', e);
-    process.exit(1);
-  })
+  .catch ((e) => {
+  console.error('❌ Erro durante o seed:', e);
+  process.exit(1);
+})
   .finally(async () => {
-    await prisma.$disconnect();
-  });
+  await prisma.$disconnect();
+});

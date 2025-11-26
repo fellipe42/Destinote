@@ -10,13 +10,43 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// adicione ao seu schema.prisma
+model User {
+  id               Int        @id @default(autoincrement())
+  name             String?
+  email            String     @unique
+  emailVerified    DateTime?
+  image            String?
+  role             String? // "free" | "paid" | "premium" | null
+  stripeCustomerId String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  accounts         Account[]
+  sessions         Session[]
+  userGoals        UserGoal[]
+}
+
+model UserGoal {
+  id         Int      @id @default(autoincrement())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     Int
+  goal       Goal     @relation(fields: [goalId], references: [id])
+  goalId     Int
+  isSelected Boolean  @default(false)
+  isDone     Boolean  @default(false)
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, goalId])
+}
+
 // Modelo de Categoria
 // Representa as 22 categorias com suas cores específicas
 model Category {
   id        Int      @id @default(autoincrement())
   name      String   @unique // Nome da categoria (ex: "Lifestyle", "Aprender")
-  color     String?  // Cor em formato hexadecimal (ex: "FF5D5D")
-  goals     Goal[]   // Relação: uma categoria tem vários goals
+  color     String? // Cor em formato hexadecimal (ex: "FF5D5D")
+  goals     Goal[] // Relação: uma categoria tem vários goals
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -24,20 +54,61 @@ model Category {
 // Modelo de Goal (Meta/Item da lista)
 // Representa cada um dos ~1000 itens da lista
 model Goal {
-  id          Int       @id @default(autoincrement())
-  title       String    // Título do goal (ex: "Pular de paraquedas")
-  local       String?   // Local opcional (ex: "Paris", "Brasil")
-  categoryId  Int       // ID da categoria
-  category    Category  @relation(fields: [categoryId], references: [id])
-  cod2        String?   // Código adicional 2
-  cod3        String?   // Código adicional 3
-  refBase     Int?      // Referência base do CSV
-  isTopTen    Boolean   @default(false) // Indica se é um dos 10 primeiros (tratamento visual especial)
-  description String?   // Descrição detalhada (para futuras expansões)
-  imageUrl    String?   // URL da imagem (placeholder ou real)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id          Int        @id @default(autoincrement())
+  title       String // Título do goal (ex: "Pular de paraquedas")
+  local       String? // Local opcional (ex: "Paris", "Brasil")
+  categoryId  Int // ID da categoria
+  category    Category   @relation(fields: [categoryId], references: [id])
+  cod2        String? // Código adicional 2
+  cod3        String? // Código adicional 3
+  refBase     Int? // Referência base do CSV
+  isTopTen    Boolean    @default(false) // Indica se é um dos 10 primeiros (tratamento visual especial)
+  description String? // Descrição detalhada (para futuras expansões)
+  imageUrl    String? // URL da imagem (placeholder ou real)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  userGoals   UserGoal[] // solução de bug
 
   @@index([categoryId])
   @@index([isTopTen])
+}
+
+// ======================================================
+// MODELOS PARA NEXT-AUTH + ROLES
+// ======================================================
+
+model Account {
+  id                Int     @id @default(autoincrement())
+  userId            Int
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           Int      @id @default(autoincrement())
+  sessionToken String   @unique
+  userId       Int
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }

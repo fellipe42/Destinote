@@ -1,5 +1,5 @@
 {
-  "/api/goals/route": "app/api/goals/route.js",
   "/page": "app/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js"
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/api/goals/route": "app/api/goals/route.js"
 }

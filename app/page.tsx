@@ -1,12 +1,18 @@
 // Página Principal - Home do Destinote
 // Exibe hero section e lista completa de goals
+/* SPRINT 1 - CORREÇÃO #2: 
+ * - Removidas animações GSAP que conflitavam com Framer Motion
+ * - Mantidas apenas animações Framer Motion para consistência
+ * - Cards agora animam suavemente sem "pulos"
+ */
 
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+// CORREÇÃO #2: Imports GSAP removidos - usando apenas Framer Motion
+// import gsap from 'gsap';
+// import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Navbar from '@/components/Navbar';
 //import GlobeBackground from '@/components/GlobeBackground';
 import ScrollBackgrounds from '@/components/ScrollBackgrounds';
@@ -14,11 +20,6 @@ import RotatingGlobe from '@/components/RotatingGlobe';
 import GoalCard from '@/components/GoalCard';
 import GoalModal from '@/components/GoalModal';
 import AboutSection from '@/components/AboutSection';
-
-// Registrar plugin do GSAP
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
-}
 
 interface Category {
   id: number;
@@ -47,6 +48,11 @@ export default function HomePage() {
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  
+  // CORREÇÃO #8: Estado para scroll infinito
+  const [displayedGoalsCount, setDisplayedGoalsCount] = useState(20); // Começa com 20 cards
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll();
@@ -81,31 +87,44 @@ export default function HomePage() {
     fetchGoals();
   }, []);
 
-  // Animações com GSAP no scroll
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
+  // CORREÇÃO #2: useEffect com GSAP REMOVIDO
+  // Animações agora são controladas apenas pelo Framer Motion em GoalCard.tsx
+  // Isso elimina o conflito que causava "pulos" nos cards
 
-    // Animar cards ao entrar na viewport
-    gsap.fromTo(
-      '.goal-card',
-      { opacity: 0, y: 50 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.6,
-        stagger: 0.1,
-        ease: 'power2.out',
-        scrollTrigger: {
-          trigger: '.goals-grid',
-          start: 'top 80%',
-        },
+  // CORREÇÃO #8: Intersection Observer para scroll infinito
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        // Se o elemento está visível e ainda há cards para carregar
+        if (first.isIntersecting && displayedGoalsCount < regularGoals.length) {
+          setIsLoadingMore(true);
+          
+          // Simula delay de carregamento para suavidade
+          setTimeout(() => {
+            // TODO: Ajustar número 20 para carregar mais/menos cards por vez
+            setDisplayedGoalsCount((prev) => Math.min(prev + 20, regularGoals.length));
+            setIsLoadingMore(false);
+          }, 300);
+        }
+      },
+      { 
+        threshold: 0.1, // Carrega quando 10% do trigger está visível
+        rootMargin: '200px' // Começa a carregar 200px antes do fim
       }
     );
 
+    const currentRef = loadMoreRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
     return () => {
-      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
     };
-  }, [goals]);
+  }, [displayedGoalsCount, regularGoals.length]);
 
   // Handler para abrir modal
   const handleGoalClick = (goal: Goal) => {
@@ -215,7 +234,7 @@ export default function HomePage() {
                 </div>
               </motion.div>
 
-              {/* Regular Goals Section - Um card por vez */}
+              {/* CORREÇÃO #8: Regular Goals Section - Carregamento progressivo */}
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -226,11 +245,16 @@ export default function HomePage() {
                 </h2>
                 <p className="text-white/70 text-center mb-12">
                   {regularGoals.length} experiências esperando por você
+                  {displayedGoalsCount < regularGoals.length && (
+                    <span className="ml-2">
+                      (mostrando {displayedGoalsCount} de {regularGoals.length})
+                    </span>
+                  )}
                 </p>
                 
-                {/* Cards individuais centralizados */}
+                {/* GUIDE: Cards carregados progressivamente para melhor performance */}
                 <div className="space-y-8 max-w-4xl mx-auto">
-                  {regularGoals.map((goal, index) => (
+                  {regularGoals.slice(0, displayedGoalsCount).map((goal, index) => (
                     <motion.div
                       key={goal.id}
                       className="goal-card"
@@ -246,6 +270,23 @@ export default function HomePage() {
                       />
                     </motion.div>
                   ))}
+                </div>
+
+                {/* Trigger para carregar mais cards */}
+                <div 
+                  ref={loadMoreRef} 
+                  className="h-20 flex items-center justify-center"
+                >
+                  {isLoadingMore && (
+                    <div className="text-white/70 text-center">
+                      Carregando mais objetivos...
+                    </div>
+                  )}
+                  {displayedGoalsCount >= regularGoals.length && (
+                    <div className="text-white/50 text-center">
+                      ✨ Você viu todos os {regularGoals.length} objetivos! ✨
+                    </div>
+                  )}
                 </div>
               </motion.div>
             </>
